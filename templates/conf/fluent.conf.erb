@@ -57,6 +57,26 @@
      retry_forever true
    </buffer>
 </match>
+<%  when "monasca" %>
+<match **>
+   @type monasca
+   keystone_url "#{ENV['FLUENT_MONASCA_KEYSTONE_URL']}"
+   monasca_api "#{ENV['FLUENT_MONASCA_LOG_API_URL']}"
+   monasca_api_version v2.0
+   username "#{ENV['FLUENT_MONASCA_USER'] || use_default}"
+   password "#{ENV['FLUENT_MONASCA_PASSWORD'] || use_default}"
+   domain_id "{#{ENV['FLUENT_MONASCA_DOMAIN_ID'] || 'default'}}"
+   project_name "{#{ENV['FLUENT_MONASCA_PROJECT_NAME'] || 'magnum'}}"
+   message_field_name "{#{ENV['FLUENT_MONASCA_MESSAGE_FIELD'] || 'Payload'}}"
+   <buffer>
+     flush_thread_count "#{ENV['FLUENT_MONASCA_BUFFER_FLUSH_THREAD_COUNT'] || '8'}"
+     flush_interval "#{ENV['FLUENT_MONASCA_BUFFER_FLUSH_INTERVAL'] || '5s'}"
+     chunk_limit_size "#{ENV['FLUENT_MONASCA_BUFFER_CHUNK_LIMIT_SIZE'] || '8M'}"
+     queue_limit_length "#{ENV['FLUENT_MONASCA_BUFFER_QUEUE_LIMIT_LENGTH'] || '32'}"
+     retry_max_interval "#{ENV['FLUENT_MONASCA_BUFFER_RETRY_MAX_INTERVAL'] || '30'}"
+     retry_forever true
+   </buffer>
+</match>
 <%  when "logentries"%>
 <match **>
    @type logentries
