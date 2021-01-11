@@ -28,8 +28,11 @@ ENV GEM_HOME /fluentd/vendor/bundle/ruby/2.6.0
 # skip runtime bundler installation
 ENV FLUENTD_DISABLE_BUNDLER_INJECTION 1
 
+ARG monasca_output_plugin_tag=1.0.1
+ARG monasca_output_plugin_url=https://github.com/monasca/fluentd-monasca/archive/$monasca_output_plugin_tag.tar.gz
+
 COPY Gemfile* /fluentd/
-RUN buildDeps="sudo make gcc g++ libc-dev libffi-dev<% if target == "graylog" %> build-essential patch zlib1g-dev liblzma-dev<% elsif target == "kafka" || target == "kafka2" %> build-essential autoconf automake libtool pkg-config<% end %><% if requires_git %> git<% end %>" \
+RUN buildDeps="sudo make gcc g++ libc-dev libffi-dev<% if target == "graylog" %> build-essential patch zlib1g-dev liblzma-dev<% elsif target == "kafka" || target == "kafka2" %> build-essential autoconf automake libtool pkg-config<% elsif target == "monasca" %> curl<% end %><% if requires_git %> git<% end %>" \
   runtimeDeps="<% if target == "kafka" || target == "kafka2" %>krb5-kdc libsasl2-modules-gssapi-mit libsasl2-dev<% elsif target == "azureblob" %>pkg-config libxslt-dev libxml2-dev<% end %>" \
      <% if target == "kafka" || target == "kafka2" %> && export DEBIAN_FRONTEND=noninteractive <% end %> && apt-get update \
      && apt-get upgrade -y \
@@ -39,6 +42,14 @@ RUN buildDeps="sudo make gcc g++ libc-dev libffi-dev<% if target == "graylog" %>
     && gem install bundler --version 2.1.4 \
     && bundle config silence_root_warning true<% if target == "azureblob" %> && bundle config build.nokogiri --use-system-libraries<% end %> \
     && bundle install --gemfile=/fluentd/Gemfile --path=/fluentd/vendor/bundle \
+<% if target == "monasca" %>
+    && curl -sSL $monasca_output_plugin_url -o /tmp/fluentd-monasca.tar.gz \
+    && tar -xvf /tmp/fluentd-monasca.tar.gz -C /tmp \
+    && cd /tmp/fluentd-monasca-* \
+    && gem build fluentd-monasca-output.gemspec \
+    && gem install fluentd-monasca-output-*.gem \
+    && rm -rf /tmp/fluentd* \
+<% end %>
     && SUDO_FORCE_REMOVE=yes \
     apt-get purge -y --auto-remove \
                   -o APT::AutoRemove::RecommendsImportant=false \
